@@ -16,7 +16,7 @@ namespace Ws_Agenda.Models.Configuring
 
             builder.Property(prop => prop.User_Password)
                 .IsRequired()
-                .HasMaxLength(30);
+                .HasMaxLength(256);
 
         }
     }

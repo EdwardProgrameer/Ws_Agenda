@@ -7,11 +7,14 @@ namespace Ws_Agenda.Services
     public class ApplicationDbContext:DbContext
 
     {
-        public ApplicationDbContext(DbContextOptions options) :
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) :
             base(options)
         {
 
         }
+
+       
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
