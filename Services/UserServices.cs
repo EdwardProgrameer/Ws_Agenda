@@ -16,47 +16,40 @@ namespace Ws_Agenda.Services
     {
 
         private readonly ApplicationDbContext context;
-        private readonly AppSetting _appSettings;
         private readonly IConfiguration conf;
-        private readonly byte[] secret;
-        public UserServices(ApplicationDbContext _context , IOptions<AppSetting> appSettings, IConfiguration configuration)
+     
+        public UserServices(ApplicationDbContext _context , IConfiguration configuration)
         {
             this.context = _context;
-            this._appSettings = appSettings.Value;
             this.conf = configuration;
-            string SecretKey = this.conf.GetValue<string>("SecretKey");
-            this.secret = Encoding.ASCII.GetBytes(SecretKey);
+         
         }
-
-        //aqui encripto la contrasena y valido el usuario 
+        //aqui desencripto la contrasena y valido el usuario 
         public async Task<AuthenficateResponse> Auth(AuthenticateRequest model)
         {
-            
-            string user_password = Encrypt.GetSHA256(model.password);
-            var user = await context.tb_users.SingleOrDefaultAsync(x => x.User_Email == model.user_email && x.User_Password == user_password);
-            if (user == null) return null;
 
-            var token = GetToken(user);
-            return new AuthenficateResponse(user,token);
-        }
-
-        // aqui obtengo y genero el token
-        private string GetToken (User user)
-        {
-         
-            var claims = new ClaimsIdentity();
-            claims.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.User_Email));
-            var tokenDescription = new SecurityTokenDescriptor()
+            var user = await context.tb_users.Where(x => x.User_Email == model.user_email).
+                Include(X => X.User_Registrer)
+                .FirstOrDefaultAsync();
+            if (user == null)
             {
-                Subject = claims,
-                Expires = DateTime.UtcNow.AddHours(2),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(this.secret), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var createdToken = tokenHandler.CreateToken(tokenDescription);
-            return tokenHandler.WriteToken(createdToken);
-        }
+                return null;
+            }
 
+            string user_password = Encrypt.ConvertToDescrypt(user.User_Password);
+            if(user_password != model.password)
+            {
+                return null;
+            }
+
+            string secret = this.conf.GetValue<string>("SecretKey");
+            var jwtHelpers = new JwtHelper(secret);
+            string token = jwtHelpers.GetToken(user);
+
+
+            return new AuthenficateResponse(user,token);
+
+        }
         //metodo para obtener clientes por el Id
         public async Task<User> GetById(int id)
         {

@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 using Ws_Agenda.Helpers;
 using Ws_Agenda.Interfaces;
 using Ws_Agenda.Services;
@@ -11,20 +13,36 @@ using Ws_Agenda.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddControllers().AddJsonOptions(opciones =>
+  opciones.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => {
-    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ws_Agenda", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "Standard Authorization header using the Bearer scheme (\"bearer {token}\")",
-        In = ParameterLocation.Header,
+        Description = "Por favor inserte el token que genero con su usuario",
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer",
 
-    options.OperationFilter<SecurityRequirementsOperationFilter>();
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement{
+
+{
+    new OpenApiSecurityScheme{
+        Reference=new OpenApiReference{
+            Type=ReferenceType.SecurityScheme,
+            Id="Bearer"
+        }
+    },
+    new string[]{}
+}
+                });
 });
 builder.Services.AddDbContext<ApplicationDbContext>(
         options => options.UseSqlServer("name=DefaultConnection"));

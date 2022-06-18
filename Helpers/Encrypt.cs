@@ -5,15 +5,20 @@ namespace Ws_Agenda.Helpers
 {
     public class Encrypt
     {
-        public static string GetSHA256(string str)
+        public static string Key = "NETJ3iSLWrKX%*Ppjc";
+        public static string ConvertToEncrypt(string password)
         {
-            SHA256 sha256 = SHA256.Create();
-            ASCIIEncoding encoding = new ASCIIEncoding();
-            byte[] stream = null;
-            StringBuilder sb = new StringBuilder();
-            stream = sha256.ComputeHash(encoding.GetBytes(str));
-            for (int i = 0; i < stream.Length; i++) sb.AppendFormat("{0:x2}", stream[i]);
-            return sb.ToString();
+
+            password += Key;
+            var passwordBytes = Encoding.UTF8.GetBytes(password);
+            return Convert.ToBase64String(passwordBytes);
+        }
+        public static string ConvertToDescrypt(string base64EncodeData)
+        {
+            var base64EncodeBytes = Convert.FromBase64String(base64EncodeData);
+            var result = Encoding.UTF8.GetString(base64EncodeBytes);
+            result = result.Substring(0, result.Length - Key.Length);
+            return result;
         }
     }
 }
