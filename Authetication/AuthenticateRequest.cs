@@ -4,9 +4,10 @@ namespace Ws_Agenda.Authetication
 {
     public class AuthenticateRequest
     {
-        [Required]
+        [Required(ErrorMessage = "The Email field is required")]
         public string user_email { get; set; }
-        [Required]
+        [Required(ErrorMessage = "The Password field is required")]
         public string password { get; set; }
     }
 }
+ 

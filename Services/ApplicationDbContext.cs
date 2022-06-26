@@ -23,6 +23,6 @@ namespace Ws_Agenda.Services
 
         }
         public DbSet<User> tb_users { get; set; }
-        public DbSet<User_Registrer> tb_user_Registred { get; set; }
+      
     }
 }

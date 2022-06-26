@@ -62,7 +62,7 @@ builder.Services.AddAuthentication(auth =>
         ValidateAudience = false
     };
 });
-
+builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
