@@ -54,39 +54,28 @@ namespace Ws_Agenda.Services
             return new AuthenficateResponse(user, token);
 
         }
-        //metodo para obtener clientes por el Id
+        //metodo para obtener usuarios por el Id
         public async Task<User> GetById(int id)
         {
             return await context.tb_users.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.User_Id == id);
         }
         //aqui creo un nuevo usuario
-        public async Task<User> AddUser(User user)
+        public async Task<User> AddUser(UserCreateDto userCreateDto)
         {
             var UserExist = await context.tb_users.AsNoTracking()
-                .SingleOrDefaultAsync(x => x.User_Email == user.User_Email);
+                .SingleOrDefaultAsync(x => x.User_Email == userCreateDto.User_Email);
             if (UserExist != null)
             {
                 return null;
             }
 
-             User users = new User
-            {
-     
-            User_Email = user.User_Email,
-            User_Name = user.User_Name,
-            User_LastName = user.User_LastName,
-            User_Password =  Encrypt.ConvertToEncrypt(user.User_Password),
-            User_Age = user.User_Age,
-            User_Phone = user.User_Phone,
-            User_Photo = user.User_Photo,
-            User_State = user.User_State
 
-        };
-
-            context.tb_users.Add(users);
+            userCreateDto.User_Password = Encrypt.ConvertToEncrypt(userCreateDto.User_Password);
+            var user = mapper.Map<User>(userCreateDto);
+            context.Add(user);
             await context.SaveChangesAsync();
-            return user;
+            return (user);
         }
         //aqui edito mi usuario
         public async Task<User> UpdateUser(UserDto userDto)
@@ -96,13 +85,13 @@ namespace Ws_Agenda.Services
             {
                 return null;
             }
-
+         
             userDB = mapper.Map(userDto, userDB);
             await context.SaveChangesAsync();
             return (userDB);
            
         }
-
+        //aqui elimino un usuario 
         public async Task<User> DeleteUser(int id)
         {
            var userDelete = await context.tb_users.FirstOrDefaultAsync(x => x.User_Id == id);
@@ -115,7 +104,7 @@ namespace Ws_Agenda.Services
             await context.SaveChangesAsync();
             return userDelete;
         }
-
+        //aqui lo reactivo
         public async Task<User>Restaurar(int id)
         {
             var userDelete = await context.tb_users.IgnoreQueryFilters()
@@ -130,6 +119,56 @@ namespace Ws_Agenda.Services
             return userDelete;
         }
 
+        //aqui cambio la contrasena del usuario
+        public async Task<User>ChangePassword(ChangePasswordDto passwordDto)
+        {
+            passwordDto.Old_Password = Encrypt.ConvertToEncrypt(passwordDto.Old_Password);
+            var userDB = await context.tb_users.FirstOrDefaultAsync(x => x.User_Id == passwordDto.User_Id && x
+            .User_Password == passwordDto.Old_Password );
+
+            if (userDB is null)
+            { return null;}
+
+            passwordDto.User_Password = Encrypt.ConvertToEncrypt(passwordDto.User_Password);
+            userDB = mapper.Map(passwordDto,userDB);
+            await context.SaveChangesAsync(); 
+            return (userDB);  
+
+        }
+
+        public async Task<User>RecoveryPassword(RecoveryPasswordDto recovery)
+        {
+            string UrlDomain = this.conf.GetValue<string>("UrlDomain");
+            string token = Encrypt.ConvertToEncrypt(Guid.NewGuid().ToString());
+            var userDB = await context.tb_users.FirstOrDefaultAsync(x =>x.User_Email == recovery.User_Email);
+            if (userDB is null)
+            {
+                return null;
+            }
+
+            userDB.Token_Recovery = token;
+            userDB = mapper.Map(recovery,userDB);
+            await context.SaveChangesAsync();
+            MailHerper.SendMail(userDB.User_Email,token,UrlDomain);
+            return (userDB);
+
+           
+
+        }
+
+        public async Task<User>RecoveryPassword2(RecoveryPassword2Dto recovery2)
+        {
+            var userDB = await context.tb_users.FirstOrDefaultAsync(x =>x.User_Email == recovery2.User_Email && x.
+            Token_Recovery != null);
+            if (userDB is null)
+            { return null;}
+
+            recovery2.User_Password = Encrypt.ConvertToEncrypt(recovery2.User_Password);
+            userDB.Token_Recovery = null;
+            userDB = mapper.Map(recovery2, userDB);
+            await context.SaveChangesAsync();
+            return(userDB);
+        }
 
     }
 }

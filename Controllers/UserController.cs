@@ -42,11 +42,11 @@ namespace Ws_Agenda.Controllers
 
             return Ok(user);    
         }
-
+      
         [HttpPost("RegisterUser") ]
-        public async Task<IActionResult> Register(User user)
+        public async Task<IActionResult> Register(UserCreateDto userCreateDto)
         {
-            var registed = await userInterface.AddUser(user);
+            var registed = await userInterface.AddUser(userCreateDto);
             if(registed is null)
                 return BadRequest(new {message ="User already exist"});
 
@@ -82,6 +82,36 @@ namespace Ws_Agenda.Controllers
                 return BadRequest(new { message = "This user is already Restaured" });
 
             return StatusCode(201, new { message = "User Restaured with exist" });
+        }
+
+        [HttpPut("ChangePasswordUser")]
+
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto passwordDto)
+        {
+            var change = await userInterface.ChangePassword(passwordDto);
+            if (change is null)
+                return BadRequest(new { message = "User or old password is incorrect" });
+            return StatusCode(201, new { message = "The Password was changed successful" });
+        }  
+
+        [HttpPut("RecoveryPassword")]
+
+        public async Task<IActionResult>RecoveryPassword(RecoveryPasswordDto recovery)
+        {
+            var recoveryPassword = await userInterface.RecoveryPassword(recovery);
+            if (recoveryPassword is null)
+                return BadRequest(new { message = "Email incorrect" });
+            return StatusCode(201, new { message = "We send email To your mail" });
+        }
+
+        [HttpPut("RecoveryPassword2")]
+
+        public async Task<IActionResult> RecoveryPassword2(RecoveryPassword2Dto recovery2)
+        {
+            var recoveryPassword = await userInterface.RecoveryPassword2(recovery2);
+            if (recoveryPassword is null)
+                return BadRequest(new { message = "Email or user is incorret" });
+            return StatusCode(201, new { message = "The Password was recovered successful" });
         }
     }
 
